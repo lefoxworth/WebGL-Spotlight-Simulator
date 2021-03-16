@@ -1,0 +1,131 @@
+
+<!DOCTYPE html>
+<html>
+
+<title>CS435 Project #4, Laura Foxworth</title>
+
+<script id="vertex-shader" type="x-shader/x-vertex">
+
+precision mediump float;
+
+attribute vec4 vPosition;
+attribute vec4 vNormal;
+varying vec3 N, L, E;
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+uniform vec4 lightPosition;
+uniform mat3 normalMatrix;
+
+uniform vec3 eyeWorldPosition;
+
+void main()
+{
+    vec3 light;
+    // vec3 pos = (modelViewMatrix * vPosition).xyz;
+    if(lightPosition.w == 0.0)  L = lightPosition.xyz;
+    else  L = (lightPosition - vPosition).xyz;
+
+    // E =  -normalize(pos);
+    E = eyeWorldPosition;
+    // N = normalize( normalMatrix*vNormal.xyz);
+    N = vNormal.xyz;
+    gl_Position = projectionMatrix * modelViewMatrix * vPosition;
+
+}
+</script>
+
+<script id="fragment-shader" type="x-shader/x-fragment">
+
+precision mediump float;
+
+uniform vec4 lightPosition;
+uniform vec3 lightDirection;
+uniform float cutoffAngle;
+
+uniform vec4 ambientProduct;
+uniform vec4 diffuseProduct;
+uniform vec4 specularProduct;
+uniform float shininess;
+varying vec3 N, L, E;
+
+void main()
+{
+    vec4 fColor;
+
+    vec3 nN = normalize(N);
+    vec3 nL = normalize(L);
+    vec3 nE = normalize(E);
+
+    vec3 H = normalize( nL + nE );
+    vec4 ambient = ambientProduct;
+
+    float Kd = max( dot(nL, nN), 0.0 );
+    vec4  diffuse = Kd*diffuseProduct;
+
+    float Ks = pow( max(dot(nN, H), 0.0), shininess );
+    vec4  specular = Ks * specularProduct;
+
+    if( dot(nL, nN) < 0.0 ) specular = vec4(0.0, 0.0, 0.0, 1.0);
+
+    if(dot(nL, normalize(-lightDirection)) >= cutoffAngle) {
+
+      fColor = ambient + diffuse +specular;
+      fColor.a = 1.0;
+    }
+    else {
+      fColor = ambient;
+      fColor.a = 1.0;
+    }
+
+    gl_FragColor = fColor;
+}
+</script>
+<p> </p>
+
+<label for="cameraPos">Select a camera position:</label>
+<select name="camera" id="cameraPos">
+  <option value="A">A</option>
+  <option value="B">B</option>
+  <option value="C">C</option>
+  <option value="D">D</option>
+  <option value="E">E</option>
+  <option value="F">F</option>
+</select>
+
+<p></p>
+
+<label for="lightPos">Select a light position:</label>
+<select name="light" id="lightPos">
+  <option value="1">1</option>
+  <option value="2">2</option>
+  <option value="3">3</option>
+  <option value="4">4</option>
+  <option value="5">5</option>
+</select>
+
+<p></p>
+
+<button id="increaseAngle">Increase Cutoff Angle</button>
+<button id="decreaseAngle">Decrease Cutoff Angle</button>
+
+<p></p>
+
+<button id="moveUp">Rotate Down</button>
+<button id="moveDown">Rotate Up</button>
+<p></p>
+<button id="moveLeft">Rotate Left</button>
+<button id="moveRight">Rotate Right</button>
+
+<p></p>
+
+<script type="text/javascript" src="../Common/webgl-utils.js"></script>
+<script type="text/javascript" src="../Common/initShaders.js"></script>
+<script type="text/javascript" src="../Common/MV.js"></script>
+<script type="text/javascript" src="spotlight.js"></script>
+
+<body>
+<canvas id="gl-canvas" width="512" height="512">
+Oops ... your browser doesn't support the HTML5 canvas element
+</canvas>
+</body>
+</html>
